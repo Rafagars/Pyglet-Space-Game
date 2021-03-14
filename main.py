@@ -26,7 +26,14 @@ class Player(pyglet.sprite.Sprite):
     def __init__(self):
         super().__init__(pyglet.resource.image('sprites/P-blue-b.png'), 320, 10)
         self.velocity_x, self.velocity_y = 0.0, 0.0
+        self.beam = pyglet.sprite.Sprite(pyglet.resource.image('sprites/Bullet1.png'))
+        self.beam.visible = False
+        self.beam.sound = pyglet.media.load('audio/laser.wav', streaming=False)
         self.key_handler = key.KeyStateHandler()
+    
+    def fire_bullet(self):
+        self.beam.visible = True
+        self.beam.y +=  10
 
     def update(self, dt):
         self.x += self.velocity_x * dt
@@ -37,13 +44,13 @@ class Player(pyglet.sprite.Sprite):
             self.velocity_x += 2
         else:
             self.velocity_x = 0
-"""     if self.key_handler[key.SPACE]:
-            if bullet.state == "ready":
-                bullet.sound.play()
+        if self.key_handler[key.SPACE]:
+            if not self.beam.visible:
+                self.beam.sound.play()
                 # Get the current x coordinate of the spaceship
-                bullet.x = self.x + 56
-                bullet.y = self.y + 70
-                bullet.fire_bullet()  """
+                self.beam.x = self.x + 56
+                self.beam.y = self.y + 70
+                self.fire_bullet() 
             
 player = Player()
 
@@ -67,34 +74,10 @@ for i in range(num_of_enemies):
     enemy_sprites.append(Enemy())
     enemy_sprites[i].update(x = random.randint(0, 736), y = random.randint(350, 500))
 
-# Bullet
-class Bullet(pyglet.sprite.Sprite):
-    def __init__(self):
-        super().__init__(pyglet.resource.image('sprites/Bullet1.png'))
-        self.visible = False
-        self.state = "ready"
-        self.sound = pyglet.media.load('audio/laser.wav', streaming=False)
-
-    def fire_bullet(self):
-        self.state = "fire"
-        self.visible = True
-        self.y +=  10
-
-bullet = Bullet()
 
 def isCollision(one, two):
     return (one.x >= two.x and one.x <= two.x + two.width) and (one.y >= two.y and one.y <= two.y + two.height) or (two.x >= one.x and two.x <= one.x + one.width) and (two.y >= one.y and two.y <= one.y + one.height)
 
-
-"""@window.event
-def on_key_press(symbol, modifiers):
-    if symbol == key.SPACE:
-        if bullet.state == "ready":
-            bullet.sound.play()
-            # Get the current x coordinate of the spaceship
-            bullet.x = player.x + 56
-            bullet.y = player.y + 70
-            bullet.fire_bullet() """
  
 def update(dt):
     player.update(dt)
@@ -116,25 +99,25 @@ def update(dt):
             enemy_sprites[i].y -= enemy_sprites[i].y_change
 
         # Collision
-        collision = isCollision(enemy_sprites[i], bullet)
+        collision = isCollision(enemy_sprites[i], player.beam)
         if collision:
             explosion = pyglet.media.load("audio/explosion.wav")
             explosion.play()
-            bullet.y = 0
-            bullet.state = "ready"
-            bullet.visible = False
+            player.beam.y = 0
+            player.beam.visible = False
             global score
             score += 1
+            global score_label
+            score_label.text = 'Score: ' + str(score)
             enemy_sprites[i].x = random.randint(0, 736)
-            enemy_sprites[i].y = random.randint(350, 150)
+            enemy_sprites[i].y = random.randint(350, 500)
 
-    if bullet.y >= 580:
-        bullet.y = 0
-        bullet.state = "ready"
-        bullet.visible = False
+    if player.beam.y >= 580:
+        player.beam.y = 0
+        player.beam.visible = False
     
-    if bullet.state == "fire":
-        bullet.fire_bullet()
+    if player.beam.visible:
+        player.fire_bullet()
 
 @window.event
 def on_draw():
@@ -143,7 +126,7 @@ def on_draw():
     score_label.draw()
     player.draw()
     enemies.draw()
-    bullet.draw()
+    player.beam.draw()
 
         
 pyglet.clock.schedule_interval(update, 1/120.0)
