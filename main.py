@@ -17,6 +17,7 @@ score = 0
 score_label = pyglet.text.Label('Score: ' + str(score), font_name='Free Sans', font_size=16, x = 10, y = 560)
 
 # Game Over
+game_over = False
 game_over_label = pyglet.text.Label('GAME OVER', font_name='Free Sans', font_size=36, 
                                    x = window.width//2, y = window.height//2, 
                                    anchor_x='center', anchor_y='center')
@@ -39,9 +40,9 @@ class Player(pyglet.sprite.Sprite):
         self.x += self.velocity_x * dt
         self.y += self.velocity_y * dt
         if self.key_handler[key.LEFT]:
-            self.velocity_x -= 2
+            self.velocity_x -= 5
         elif self.key_handler[key.RIGHT]:
-            self.velocity_x += 2
+            self.velocity_x += 5
         else:
             self.velocity_x = 0
         if self.key_handler[key.SPACE]:
@@ -76,18 +77,27 @@ for i in range(num_of_enemies):
 
 
 def isCollision(one, two):
-    return (one.x >= two.x and one.x <= two.x + two.width) and (one.y >= two.y and one.y <= two.y + two.height) or (two.x >= one.x and two.x <= one.x + one.width) and (two.y >= one.y and two.y <= one.y + one.height)
+    distance = math.sqrt(math.pow(one.x - two.x, 2) + (math.pow(one.y - two.y, 2)))
+    if distance < 27:
+        return True
+    else:
+        return False
 
- 
 def update(dt):
+    #Player Movement
     player.update(dt)
+    if player.x < 0:
+        player.x = 0
+    elif player.x >= 680:
+        player.x = 680
     # Enemy movement
     for i in range(num_of_enemies):
         # Game Over
-        if enemy_sprites[i].y < 20:
+        if enemy_sprites[i].y < 30:
             for j in range(num_of_enemies):
                 enemy_sprites[j].y = 2000
-            game_over_label.draw()
+                global game_over
+                game_over = True
             break
 
         enemy_sprites[i].x += enemy_sprites[i].x_change
@@ -107,7 +117,6 @@ def update(dt):
             player.beam.visible = False
             global score
             score += 1
-            global score_label
             score_label.text = 'Score: ' + str(score)
             enemy_sprites[i].x = random.randint(0, 736)
             enemy_sprites[i].y = random.randint(350, 500)
@@ -127,6 +136,8 @@ def on_draw():
     player.draw()
     enemies.draw()
     player.beam.draw()
+    if game_over:
+        game_over_label.draw()
 
         
 pyglet.clock.schedule_interval(update, 1/120.0)
